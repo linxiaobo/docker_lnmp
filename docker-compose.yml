@@ -1,0 +1,108 @@
+version: '3'
+services:
+  # web server
+  nginx:
+    build:
+      context: ./docker/nginx
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # app
+      - ./src:/usr/share/nginx/html
+      # nginx configs
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/:ro
+      # certificates
+      - ./docker/nginx/ca/dockerlnmp.crt/:/etc/nginx/dockerlnmp.crt:ro
+      - ./docker/nginx/ca/dockerlnmp.key/:/etc/nginx/dockerlnmp.key:ro
+    links:
+      - phpfpm7:phpfpm7
+
+  # php-fpm
+  phpfpm7:
+    build:
+      context: ./docker/php-fpm
+    ports:
+      - "9000"
+    volumes:
+      - ./src:/usr/share/nginx/html
+      # Your php.ini
+      - ./docker/php-fpm/php.ini-production:/usr/local/etc/php/php.ini:ro
+    # environment:
+      # Set your APP env variables here:
+      # - APP_KEY=
+      # - DB_HOST=
+      # - DB_DATABASE=
+      # - DB_USERNAME=
+      # - DB_PASSWORD=
+    links:
+      - mysql:mysql
+      - redis:redis
+      - elasticsearch:elasticsearch
+      - mailcatcher:mailcather
+
+  # database
+  mysql:
+    build:
+        context: ./docker/mysql
+    image: mysql:5.7
+    ports:
+      # Allow client to access 3306
+      - "3306:3306"
+    volumes:
+      # NOTE: your data will be stored in ./mysql
+      - ./docker/mysql/data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+
+  #varnish
+  cache_server:
+      build:
+        context: ./docker/varnish
+      container_name: varnish
+      depends_on:
+        - nginx
+      volumes:
+        - ./docker/varnish/default.vcl:/etc/varnish/default.vcl
+        - ./docker/varnish/varnish:/etc/default/varnish
+      ports:
+        - "6082:6082"
+
+  # redis
+  redis:
+    build:
+        context: ./docker/redis
+    image: redis:latest
+    ports:
+        - "6379:6379"
+    #command: redis-server --appendonly yes
+    volumes:
+        - ./docker/redis/redis.conf:/usr/local/redis/redis.conf
+        - ./docker/redis/redis.log:/usr/local/redis/redis.log
+        - ./docker/redis/data/:/data/:rw
+
+  #elasticsearch
+  elasticsearch:
+      image: docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+      environment:
+        - cluster.name=docker-cluster
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      volumes:
+        - ./var/esdata1:/usr/share/elasticsearch/data
+      ports:
+        - 9200:9200
+        - 9300:9300
+
+  #mailcatcher
+  mailcatcher:
+    build:
+      context: ./docker/mailcatcher
+    ports:
+      - 1080:1080
