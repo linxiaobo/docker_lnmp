@@ -4,3 +4,4 @@
 *.csr
 redis/data
 .idea
+.DS_Store

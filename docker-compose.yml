@@ -2,8 +2,6 @@ version: '3'
 services:
   # web server
   nginx:
-    build:
-      context: ./docker/nginx
     image: nginx:latest
     ports:
       - "80:80"
@@ -45,8 +43,6 @@ services:
 
   # database
   mysql:
-    build:
-        context: ./docker/mysql
     image: mysql:5.7
     ports:
       # Allow client to access 3306
@@ -72,8 +68,6 @@ services:
 
   # redis
   redis:
-    build:
-        context: ./docker/redis
     image: redis:latest
     ports:
         - "6379:6379"
@@ -102,7 +96,7 @@ services:
 
   #mailcatcher
   mailcatcher:
-    build:
-      context: ./docker/mailcatcher
+    build: 
+        context: ./docker/mailcatcher
     ports:
       - 1080:1080
