@@ -66,3 +66,10 @@ Just change the symlink to point to /run/systemd/resolve/resolv.conf, which list
     $ sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 
 Verify on the host: cat /etc/resolv.conf
+
+Restart docker:
+
+    $ sudo service docker restart
+    
+This will solve this problem.
+    
